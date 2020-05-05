@@ -1,0 +1,36 @@
+plugins {
+    id 'groovy'
+}
+
+group 'cn.spx'
+version '1.0-SNAPSHOT'
+
+repositories {
+    maven{ url 'http://maven.aliyun.com/nexus/content/groups/public'}
+    maven { url 'https://maven.aliyun.com/repositories/google' }
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:3.0.3'
+    compile 'com.sparkjava:spark-core:2.9.1'
+    compile 'com.google.code.gson:gson:2.8.5'
+    compile 'org.slf4j:slf4j-log4j12:1.7.25'
+    compile 'com.qcloud:cos_api:5.6.22'
+}
+
+jar {
+    manifest {
+        attributes(
+                "Manifest-Version": 1.0,
+                "Main-Class": "cn.spx.blogDeploy2Cos.Start"
+                ,"Class-Path": configurations.compile.collect { "lib/${it.name}" }.join(' ')
+        )
+    }
+}
+task copyJar(type:Copy){
+    from configurations.runtime
+    into ('build/libs/lib')
+}
+task release(type: Copy,dependsOn: [build,copyJar]) {
+}
