@@ -44,13 +44,16 @@ class CosOpt{
 
     def pullAndHugoExec(){
         //我把hugo二进制程序直接放到了blog目录下，所以直接这么写了
-        String command = 'sh -c  "cd ${blogFolder} && git pull && ./hugo"'.toString()
+        String command = "/bin/bash -c  'cd ${blogFolder} && git pull && ./hugo'".toString()
         //windows下命令
         if(System.getProperty("os.name").toLowerCase().startsWith("win")) {
             command = "cmd /c cd ${blogFolder} && git pull && hugo".toString()
         }
-        command.execute()
+        def process = command.execute()
+        process.waitFor()
+        log.info("command执行结果:{}",process.getText())
     }
+    ///bin/bash -c  "cd /root/blog && git pull && ./hugo"
 
     def pushObj2Cos(String  fileNmae,File localFile){
         PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, fileNmae,localFile)
@@ -117,17 +120,22 @@ class CosOpt{
                 if (opt.RUNING_FLAG) {
                     log.warn("程序正在执行，1秒后重试")
                     Thread.currentThread().sleep(1000)
+                    fileSystemSync()
                     continue
                 }
                 break
             }
             opt.RUNING_FLAG = 1
-            opt.pullAndHugoExec()
-            //不调sync可能会提示不存在文件
-            fileSystemSync()
-            opt.pushBlog2Cos()
-            fileSystemSync()
-            opt.RUNING_FLAG = 0
+            try {
+                opt.pullAndHugoExec()
+                //不调sync可能会提示不存在文件
+                fileSystemSync()
+                opt.pushBlog2Cos()
+            } catch(Exception e){
+                log.error("执行失败",e)
+            } finally{
+                opt.RUNING_FLAG = 0
+            }
         }).start()
     }
 
