@@ -44,14 +44,14 @@ class CosOpt{
 
     def pullAndHugoExec(){
         //我把hugo二进制程序直接放到了blog目录下，所以直接这么写了
-        String command = "/bin/bash -c  'cd ${blogFolder} && git pull && ./hugo'".toString()
+        def command = ["/bin/bash","-c","git pull && ./hugo"]
         //windows下命令
         if(System.getProperty("os.name").toLowerCase().startsWith("win")) {
             command = "cmd /c cd ${blogFolder} && git pull && hugo".toString()
         }
-        def process = command.execute()
-        process.waitFor()
-        log.info("command执行结果:{}",process.getText())
+        def proc = command.execute(null, new File(blogFolder))
+        proc.waitFor()
+        log.info("command执行结果,code:{},out:{},err:{}",proc.exitValue(),proc.err.text,proc.in.text)
     }
     ///bin/bash -c  "cd /root/blog && git pull && ./hugo"
 
